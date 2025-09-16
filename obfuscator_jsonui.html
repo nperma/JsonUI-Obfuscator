@@ -1,0 +1,747 @@
+<!doctype html>
+<html lang="id">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>JSON UI Obfuscator — Nperma</title>
+  <style>
+    :root {
+      --bg: #141c2e;
+      --card: rgba(255, 255, 255, 0.08);
+      --muted: #8b98ab;
+      --accent: #4fa3ff;
+      --accent-2: #7bd1ff;
+      --success: #22c55e;
+      --danger: #ef4444;
+      --glass: rgba(255, 255, 255, 0.10);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+    }
+
+    html,
+    body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      min-height: 100%;
+      background: linear-gradient(160deg, #1b2844 0%, #0f1a2b 100%);
+      color: #eef6ff;
+      overflow: auto;
+    }
+
+    .wrap {
+      display: flex;
+      flex-direction: column;
+      width: 100%;
+      min-height: 100vh;
+      padding: 18px;
+      box-sizing: border-box;
+      gap: 12px;
+    }
+
+    header {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 20px;
+      letter-spacing: 0.2px
+    }
+
+    .lead {
+      margin: 6px 0 0;
+      color: var(--muted);
+      font-size: 13px;
+      max-width: 1200px
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      max-width: 1200px;
+      width: 100%;
+      margin: 8px auto 0;
+      align-items: start;
+    }
+
+    .panel {
+      background: var(--card);
+      padding: 14px;
+      border-radius: 14px;
+      backdrop-filter: blur(8px);
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.45);
+      display: flex;
+      flex-direction: column;
+      overflow: visible;
+    }
+
+    .panelBody {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      max-height: calc(80vh);
+      overflow: auto;
+      padding-bottom: 6px;
+    }
+
+    label {
+      font-size: 12px;
+      color: var(--muted);
+      margin: 6px 0 2px
+    }
+
+    .modeToggle {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      margin-bottom: 6px
+    }
+
+    .modeBtn {
+      padding: 8px 12px;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      background: transparent;
+      color: var(--muted);
+      cursor: pointer;
+      font-weight: 700;
+      font-size: 13px;
+    }
+
+    .modeBtn.active {
+      background: linear-gradient(90deg, var(--accent), var(--accent-2));
+      color: #04202a;
+      border-color: transparent;
+      box-shadow: 0 6px 18px rgba(79, 163, 255, 0.12);
+    }
+
+    .inputWrap {
+      display: flex;
+      flex-direction: column;
+      gap: 10px
+    }
+
+    textarea#jsonInput {
+      width: 100%;
+      min-height: 160px;
+      max-height: 40vh;
+      padding: 12px 14px;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: rgba(255, 255, 255, 0.02);
+      color: inherit;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, "Roboto Mono", "Courier New", monospace;
+      font-size: 13px;
+      resize: vertical;
+      line-height: 1.45;
+      box-sizing: border-box;
+    }
+
+    .fileBox {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px;
+      border-radius: 10px;
+      border: 1px dashed rgba(255, 255, 255, 0.06);
+      background: rgba(255, 255, 255, 0.01);
+    }
+
+    input[type="file"] {
+      display: block
+    }
+
+    .row {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+      margin-top: 6px
+    }
+
+    input[type="text"],
+    select {
+      padding: 8px 10px;
+      border-radius: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: rgba(255, 255, 255, 0.02);
+      color: inherit;
+      font-size: 13px;
+    }
+
+    .small {
+      width: 70px
+    }
+
+    .btn {
+      padding: 8px 12px;
+      border-radius: 10px;
+      border: 0;
+      background: var(--accent);
+      color: #04202a;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 700
+    }
+
+    .btn.secondary {
+      background: transparent;
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      color: var(--muted)
+    }
+
+    .btn.ghost {
+      background: transparent;
+      border: 1px dashed rgba(255, 255, 255, 0.06);
+      color: var(--muted)
+    }
+
+    .pill {
+      background: var(--glass);
+      padding: 4px 8px;
+      border-radius: 999px;
+      font-size: 11px;
+      color: var(--muted)
+    }
+
+    pre.output {
+      width: 100%;
+      padding: 14px;
+      border-radius: 10px;
+      background: rgba(0, 0, 0, 0.35);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      font-size: 13px;
+      line-height: 1.45;
+      white-space: pre-wrap;
+      word-break: break-word;
+      max-height: 60vh;
+      overflow: auto;
+    }
+
+    .meta {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 8px
+    }
+
+    .blacklistPills {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 8px
+    }
+
+    .black-pill {
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid rgba(255, 255, 255, 0.03);
+      cursor: pointer;
+      color: var(--muted);
+      font-weight: 600
+    }
+
+    /* modal backdrop+card (kotak, blur) */
+    .modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.0);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+    }
+
+    .modal.show {
+      display: flex;
+    }
+
+    .modalCard {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 94%;
+      max-width: 720px;
+      max-height: 80vh;
+      background: #0f1724;
+      /* kotak solid (dark) */
+      padding: 18px;
+      border-radius: 0;
+      /* kotak */
+      box-shadow: 0 18px 60px rgba(0, 0, 0, 0.7);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      overflow: auto;
+      z-index: 10000;
+    }
+
+    /* blur layer behind modal: a separate element inserted dynamically */
+    .modalBackdropBlur {
+      position: fixed;
+      inset: 0;
+      backdrop-filter: blur(10px) saturate(120%);
+      -webkit-backdrop-filter: blur(10px) saturate(120%);
+      background: rgba(255, 255, 255, 0.02);
+      /* subtle frosted glass tint */
+      z-index: 9998;
+      display: none;
+    }
+
+    .modalBackdropBlur.show {
+      display: block;
+    }
+
+    @media (max-width:980px) {
+      .grid {
+        grid-template-columns: 1fr;
+        gap: 12px
+      }
+
+      .panelBody {
+        max-height: none
+      }
+
+      textarea#jsonInput {
+        max-height: 50vh
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+    <header>
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap">
+        <div>
+          <h1>JSON UI Obfuscator <span class="pill">by Nperma</span></h1>
+          <div class="lead">Randomize element names sesuai namespace. Bisa blacklist, minify, prefix custom, dan unicode
+            escape.</div>
+        </div>
+        <div style="opacity:0.9;font-size:12px;color:var(--muted)">v1 • local</div>
+      </div>
+    </header>
+
+    <main class="grid">
+      <!-- Left -->
+      <section class="panel">
+        <div class="panelBody">
+          <label>Input mode</label>
+          <div class="modeToggle" role="tablist" aria-label="Input mode">
+            <button id="modePaste" class="modeBtn active" role="tab" aria-selected="true">Paste JSON UI</button>
+            <button id="modeFile" class="modeBtn" role="tab" aria-selected="false">Upload file</button>
+          </div>
+
+          <div class="inputWrap">
+            <div id="pasteWrap">
+              <label for="jsonInput">Or paste JSON UI</label>
+              <textarea id="jsonInput"
+                                                                                                                                      placeholder='Paste JSON UI here — contoh: {"namespace":"server_form", ... }'></textarea>
+            </div>
+
+            <div id="fileWrap" style="display:none">
+              <label for="file">Upload JSON file</label>
+              <div class="fileBox">
+                <input id="file" type="file" accept=".json">
+                <div style="color:var(--muted);font-size:13px">Pilih file .json untuk diobfuscate</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="row" style="margin-top:6px">
+            <button id="runBtn" class="btn">Run / Obfuscate</button>
+            <button id="loadExample" class="btn secondary">example</button>
+            <button id="clearBtn" class="btn ghost">clear</button>
+          </div>
+
+          <div style="display:flex;gap:12px;align-items:center;margin-top:8px;flex-wrap:wrap">
+            <div style="flex:1;min-width:220px">
+              <label>Prefix for randomized names</label>
+              <input id="prefix" type="text" value="" placeholder="Prefix">
+            </div>
+
+            <div style="width:120px">
+              <label>Random length</label>
+              <input id="randLen" class="small" type="text" value="20" inputmode="numeric">
+            </div>
+
+            <div style="display:flex;flex-direction:column">
+              <label style="font-size:12px;color:var(--muted);">Options</label>
+              <div style="display:flex;gap:10px;align-items:center">
+                <label style="font-size:13px"><input id="minify" type="checkbox"> Minify</label>
+                <label style="font-size:13px"><input id="unicodeEscape" type="checkbox"> Unicode Escape (all
+                  strings)</label>
+              </div>
+            </div>
+          </div>
+
+          <div style="margin-top:10px;display:flex;gap:12px;align-items:flex-start;flex-wrap:wrap">
+            <div style="flex:1;min-width:220px">
+              <label>Blacklist element (single)</label>
+              <div style="display:flex;gap:8px">
+                <input id="blacklist" type="text" placeholder="contoh: long_form">
+                <button id="addBlacklist" class="btn secondary">Add</button>
+              </div>
+              <div id="blacklistError" style="color:var(--danger);font-size:12px;margin-top:6px"></div>
+              <div class="blacklistPills" id="blacklistTags" aria-live="polite"></div>
+            </div>
+
+            <div style="width:260px">
+              <label>Namespace (override)</label>
+              <input id="namespaceOverride" type="text" placeholder="kosong = baca dari JSON">
+              <div class="meta">Jika kosong, akan diambil dari properti <code>namespace</code> JSON.</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Right -->
+      <section class="panel">
+        <div class="panelBody" style="padding:0">
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px">
+            <div><strong>Result</strong> <span id="status" class="pill" style="margin-left:8px">idle</span></div>
+            <div style="display:flex;gap:10px;align-items:center">
+              <button id="copyBtn" class="btn secondary">Copy</button>
+              <button id="downloadBtn" class="btn">Download</button>
+            </div>
+          </div>
+
+          <div style="padding:0 14px 14px 14px">
+            <pre id="output" class="output" spellcheck="false"></pre>
+
+            <div style="display:flex;gap:10px;align-items:center;margin-top:12px">
+              <button id="showMapBtn" class="btn secondary">Show Map</button>
+              <button id="togglePreviewBtn" class="btn secondary">Toggle View</button>
+              <div id="errors" style="color:var(--danger);font-size:13px;margin-left:auto"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer style="max-width:1200px;margin:0 auto">
+      <div class="meta" style="text-align:center;">Made by Nperma — Resize window/HP full fit</div>
+    </footer>
+  </div>
+
+  <!-- modal card + separate blur backdrop element -->
+  <div id="modalBackdrop" class="modalBackdropBlur"></div>
+  <div id="mapModal" class="modal" role="dialog" aria-modal="true">
+    <div class="modalCard" role="document">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <h2 style="margin:0">Rename Map</h2>
+        <div style="display:flex;gap:8px">
+          <button id="copyMapBtn" class="btn">Copy</button>
+          <button id="closeModal" class="btn secondary">Close</button>
+        </div>
+      </div>
+      <pre id="mapContent"
+                                                                                                                              style="margin-top:12px;background:rgba(0,0,0,0.08);padding:12px;border-radius:6px;white-space:pre-wrap"></pre>
+    </div>
+  </div>
+
+  <script>
+    /* ----------------- core helpers ----------------- */
+function el(id){return document.getElementById(id)}
+function escapeRegex(s){ return String(s).replace(/[.*+?^${}()|[\]\\]/g,'\\$&'); }
+function randomName(prefix,len){
+  const chars='abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  let out=''; for(let i=0;i<len;i++) out+=chars[Math.floor(Math.random()*chars.length)];
+  return String(prefix||'') + out;
+}
+
+/* Convert JS string -> sequence of \uXXXX (single backslash in JS string) */
+function escapeStringToUnicodeLiteral(str){
+  let out='';
+  for(let i=0;i<str.length;i++){
+    const code = str.charCodeAt(i).toString(16).padStart(4,'0');
+    out += '\\u' + code;
+  }
+  return out;
+}
+
+function unicodeEscapeAllStringsObj(v){
+  if (typeof v === 'string') return escapeStringToUnicodeLiteral(v);
+  if (Array.isArray(v)) return v.map(unicodeEscapeAllStringsObj);
+  if (v && typeof v === 'object'){
+    const out = {};
+    for (const k in v){
+      const newKey = escapeStringToUnicodeLiteral(k);
+      out[newKey] = unicodeEscapeAllStringsObj(v[k]);
+    }
+    return out;
+  }
+  return v;
+}
+
+/* fix double-escaped sequences produced by JSON.stringify (\\uXXXX -> \uXXXX) */
+function fixStringifyUnicodeEscapes(jsonText){
+  // Replace \\uXXXX -> \uXXXX
+  jsonText = jsonText.replace(/\\\\u([0-9a-fA-F]{4})/g, '\\u$1');
+  // repeat once more to be safe
+  jsonText = jsonText.replace(/\\\\u([0-9a-fA-F]{4})/g, '\\u$1');
+  return jsonText;
+}
+
+/* Remove trailing commas that are outside strings.
+   Scans the JSON text and drops commas that are followed (ignoring whitespace)
+   by a '}' or ']' character.
+*/
+function stripTrailingCommas(jsonText){
+  let out = '';
+  let inString = false;
+  let escaped = false;
+  const len = jsonText.length;
+
+  for (let i = 0; i < len; i++) {
+    const ch = jsonText[i];
+
+    if (inString) {
+      out += ch;
+      if (escaped) {
+        escaped = false;
+      } else {
+        if (ch === '\\') escaped = true;
+        else if (ch === '"') inString = false;
+      }
+      continue;
+    }
+
+    // not in string
+    if (ch === '"') {
+      inString = true;
+      out += ch;
+      continue;
+    }
+
+    if (ch === ',') {
+      // look ahead for next non-whitespace char
+      let j = i + 1;
+      while (j < len && /\s/.test(jsonText[j])) j++;
+      const next = jsonText[j];
+      if (next === '}' || next === ']') {
+        // skip this comma (do not append), effectively removing trailing comma
+        continue;
+      } else {
+        out += ch;
+        continue;
+      }
+    }
+
+    out += ch;
+  }
+
+  return out;
+}
+
+/* core obfuscator (same logic as before) */
+function tools_4no(json, blacklist = [],prefix,len) {
+  const ns = json.namespace;
+  if (!ns) throw new Error('No namespace found');
+
+  const defined = new Set(); // semua elementName yang ada di JSON
+  const renameMap = {};
+
+  // 1. Catat semua elementName yang terdefine
+  for (const key in json) {
+    if (key === 'namespace' || (!!blacklist && blacklist.includes(key))) continue;
+    const elementName = key.split('@')[0];
+    defined.add(elementName);
+  }
+
+  // 2. Buat mapping untuk elementName yang dalam namespace
+  for (const key in json) {
+    if (key === 'namespace') continue;
+    if (key.includes('@') && !key.includes(ns + '.')) continue;
+
+    const elementName = key.split('@')[0];
+    if (!renameMap[elementName]) renameMap[elementName] = randomName(prefix,len);
+  }
+
+  // 3. Replace dalam string JSON, hanya kalau elementName ada di defined
+  let text = JSON.stringify(json);
+
+  for (const [oldName, newName] of Object.entries(renameMap)) {
+    if (!defined.has(oldName)) continue;
+
+    // ganti key: "idk@server_form.button" → "xyz@server_form.button"
+    const reKey = new RegExp(`"${oldName}(@${ns}\\.[^"]+)?"`, 'g');
+    text = text.replace(reKey, (m) => m.replace(oldName, newName));
+
+    // referensi: "@server_form.idk"
+    const reNs = new RegExp(`@${ns}\\.${oldName}\\b`, 'g');
+    text = text.replace(reNs, `@${ns}.${newName}`);
+
+    // referensi: "server_form.idk"
+    const reNs2 = new RegExp(`"${ns}\\.${oldName}"`, 'g');
+    text = text.replace(reNs2, `"${ns}.${newName}"`);
+
+    // referensi: "@idk"
+    const reLocal = new RegExp(`@${oldName}\\b`, 'g');
+    text = text.replace(reLocal, `@${newName}`);
+  }
+
+  return {result:text,map:renameMap};
+}
+
+function preserveFloats(jsonText, originalText) {
+  // cari semua pasangan "key": value (float) di input asli
+  const floatPattern = /"([^"]+)"\s*:\s*(-?\d+\.\d+)/g;
+  const floatMap = new Map();
+  let match;
+
+  while ((match = floatPattern.exec(originalText))) {
+    const key = match[1];
+    const value = match[2];
+    floatMap.set(key, value); // simpan nilai float asli (string)
+  }
+
+  if (floatMap.size === 0) return jsonText;
+
+  // patch output sesuai nilai asli
+  return jsonText.replace(/"([^"]+)"\s*:\s*(-?\d+(\.\d+)?)/g, (m, key, num) => {
+    if (floatMap.has(key)) {
+      return `"${key}": ${floatMap.get(key)}`;
+    }
+    return m;
+  });
+}
+
+
+
+/* ----------------- UI wiring ----------------- */
+const modePaste = el('modePaste'), modeFile = el('modeFile');
+const pasteWrap = el('pasteWrap'), fileWrap = el('fileWrap');
+const fileInput = el('file'), jsonInput = el('jsonInput');
+const runBtn = el('runBtn'), loadExample = el('loadExample'), clearBtn = el('clearBtn');
+const prefixInput = el('prefix'), randLenInput = el('randLen'), minifyInput = el('minify'), unicodeInput = el('unicodeEscape');
+const blacklistInput = el('blacklist'), addBlacklistBtn = el('addBlacklist'), blacklistTags = el('blacklistTags'), blacklistError = el('blacklistError');
+const namespaceOverride = el('namespaceOverride');
+const runStatus = el('status'), outputEl = el('output'), errorsEl = el('errors');
+const copyBtn = el('copyBtn'), downloadBtn = el('downloadBtn'), showMapBtn = el('showMapBtn'), togglePreviewBtn = el('togglePreviewBtn');
+const mapModal = el('mapModal'), mapContent = el('mapContent'), closeModal = el('closeModal'), copyMapBtn = el('copyMapBtn');
+const modalBackdrop = el('modalBackdrop');
+
+let lastResultObj = null, lastMap = null, pretty = true;
+let blacklistArr = [];
+
+function setMode(m){
+  if(m === 'paste'){ modePaste.classList.add('active'); modeFile.classList.remove('active'); pasteWrap.style.display = ''; fileWrap.style.display = 'none'; }
+  else { modeFile.classList.add('active'); modePaste.classList.remove('active'); pasteWrap.style.display = 'none'; fileWrap.style.display = ''; }
+}
+modePaste.addEventListener('click', ()=> setMode('paste'));
+modeFile.addEventListener('click', ()=> setMode('file'));
+setMode('paste');
+
+function renderBlacklist(){ blacklistTags.innerHTML = ''; blacklistArr.forEach((item, idx)=>{ const btn = document.createElement('button'); btn.type='button'; btn.className='black-pill'; btn.textContent=item+'  ✕'; btn.title='Click to remove'; btn.onclick=()=>{ blacklistArr.splice(idx,1); renderBlacklist(); }; blacklistTags.appendChild(btn); }); }
+addBlacklistBtn.addEventListener('click', ()=>{
+  const raw = String(blacklistInput.value || '').trim();
+  if(!raw){ blacklistError.textContent = 'Invalid blacklist: input kosong'; setTimeout(()=> blacklistError.textContent='', 3000); return; }
+  if(raw.includes(',') || raw.includes(' ')){ blacklistError.textContent = 'Invalid blacklist: tidak boleh mengandung koma atau spasi'; setTimeout(()=> blacklistError.textContent='', 3500); return; }
+  blacklistError.textContent = '';
+  if(!blacklistArr.includes(raw)){ blacklistArr.push(raw); renderBlacklist(); }
+  blacklistInput.value = '';
+});
+
+fileInput.addEventListener('change', (ev)=>{ const f = ev.target.files && ev.target.files[0]; if(!f) return; const r = new FileReader(); r.onload = ()=> { jsonInput.value = r.result; setMode('paste'); runStatus.textContent = 'Loaded file: ' + f.name; }; r.onerror = ()=> runStatus.textContent = 'Failed to load file'; r.readAsText(f); });
+
+loadExample.addEventListener('click', ()=>{
+  const example = {
+    "namespace":"server_form",
+    "hallo":{"type":"panel"},
+    "hello@server_form.hallo":{},
+    "long_form":{},
+    "hellooo@hello":{},
+    "idk@server_form.button":{},
+    "test":{"type":"stack_panel","factory":{"name":"buttons","button":"server_form.dynamic_button","modal":"@server_form.idk"}}
+  };
+  jsonInput.value = JSON.stringify(example, null, 4);
+  runStatus.textContent = 'Example loaded';
+});
+clearBtn.addEventListener('click', ()=>{ jsonInput.value = ''; outputEl.textContent = ''; lastResultObj = null; lastMap = null; runStatus.textContent = 'cleared'; });
+
+
+
+runBtn.addEventListener('click', ()=>{
+  errorsEl && (errorsEl.textContent = '');
+  try {
+    if(!jsonInput.value.trim()){ errorsEl.textContent = 'No JSON input provided'; runStatus.textContent = 'error'; return; }
+    let obj = JSON.parse(jsonInput.value);
+    const nsOverride = String(namespaceOverride.value || '').trim();
+    if(nsOverride) obj.namespace = nsOverride;
+    const pre = String(prefixInput.value || '');
+    const len = parseInt(String(randLenInput.value || '20')) || 20;
+    const unicodeFlag = !!unicodeInput.checked;
+
+    const out = tools_4no(obj, blacklistArr, pre, len);
+    lastResultObj = out.result;
+    lastMap = out.map;
+    pretty = !minifyInput.checked;
+
+    let jsonText,
+    originalInput=jsonInput.value
+if (unicodeFlag) {
+  const transformedObj = unicodeEscapeAllStringsObj(JSON.parse(lastResultObj));
+  let tmp = pretty
+    ? JSON.stringify(transformedObj, null, 2)
+    : JSON.stringify(transformedObj);
+  jsonText = fixStringifyUnicodeEscapes(
+    preserveFloats(tmp, originalInput)
+  );
+} else {
+  let tmp = pretty
+    ? JSON.stringify(JSON.parse(lastResultObj), null, 2)
+    : JSON.stringify(JSON.parse(lastResultObj));
+  jsonText = preserveFloats(tmp, originalInput);
+}
+
+
+
+    outputEl.textContent = jsonText
+    runStatus.textContent = 'done';
+    errorsEl.textContent = '';
+  } catch(err) {
+    errorsEl.textContent = 'Invalid JSON: ' + err.message;
+    runStatus.textContent = 'error';
+  }
+});
+
+/* copy / download / toggle */
+copyBtn.addEventListener('click', ()=>{ if(!outputEl.textContent) return; navigator.clipboard.writeText(outputEl.textContent).then(()=> runStatus.textContent = 'copied'); });
+
+downloadBtn.addEventListener('click', ()=>{
+  if(!outputEl.textContent) return;
+  const a = document.createElement('a');
+  const blob = new Blob([outputEl.textContent], {type:'application/json'});
+  a.href = URL.createObjectURL(blob);
+  a.download = 'obfuscated.json';
+  document.body.appendChild(a); a.click(); a.remove();
+  runStatus.textContent = 'download started';
+});
+
+togglePreviewBtn.addEventListener('click', ()=>{ if(!lastResultObj) return; pretty = !pretty; /* re-run display logic */ runBtn.click(); });
+
+/* mapping modal */
+showMapBtn.addEventListener('click', ()=>{
+  if(!lastMap) return;
+  const pairs = Object.entries(lastMap).map(([k,v])=>`${k} → ${v}`).join('\n');
+  mapContent.textContent = pairs || '(no mapping)';
+  // show blur backdrop + modal card
+  modalBackdrop.classList.add('show');
+  mapModal.classList.add('show');
+});
+closeModal.addEventListener('click', ()=>{ modalBackdrop.classList.remove('show'); mapModal.classList.remove('show'); });
+copyMapBtn.addEventListener('click', ()=>{ const text = mapContent.textContent || ''; if(!text) return; navigator.clipboard.writeText(text).then(()=> runStatus.textContent = 'map copied'); });
+window.addEventListener('click', (ev)=>{ if(ev.target === mapModal) { modalBackdrop.classList.remove('show'); mapModal.classList.remove('show'); }});
+window.addEventListener('keydown', (e)=>{ if(e.key === 'Escape') { modalBackdrop.classList.remove('show'); mapModal.classList.remove('show'); }});
+
+runStatus.textContent = 'idle';
+renderBlacklist();
+  </script>
+
+
+</body>
+
+</html>
