@@ -1,0 +1,2 @@
+# JsonUI-Obfuscator
+- support references
