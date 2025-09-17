@@ -678,8 +678,8 @@ runBtn.addEventListener('click', ()=>{
     if (unicodeFlag) {
       const transformed = unicodeEscapeAllStringsObj(JSON.parse(lastResultObj));
       tmp = pretty 
-        ? stringifyWithFloat(JSON.parse(transformed), null, 2) 
-        : stringifyWithFloat(JSON.parse(transformed));
+        ? stringifyWithFloat(transformed, null, 2) 
+        : stringifyWithFloat(transformed);
     } else {
       tmp = pretty
         ? stringifyWithFloat(JSON.parse(lastResultObj), null, 2)
