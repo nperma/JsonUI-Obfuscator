@@ -485,6 +485,7 @@ function fixStringifyUnicodeEscapes(jsonText){
   return jsonText;
 }
 
+
 /* Remove trailing commas that are outside strings.
    Scans the JSON text and drops commas that are followed (ignoring whitespace)
    by a '}' or ']' character.
@@ -583,33 +584,8 @@ function tools_4no(json, blacklist = [],prefix,len) {
     text = text.replace(reLocal, `@${newName}`);
   }
 
-  return {result:text,map:renameMap};
+  return{result:text,map:renameMap};
 }
-
-function preserveFloats(jsonText, originalText) {
-  // cari semua pasangan "key": value (float) di input asli
-  const floatPattern = /"([^"]+)"\s*:\s*(-?\d+\.\d+)/g;
-  const floatMap = new Map();
-  let match;
-
-  while ((match = floatPattern.exec(originalText))) {
-    const key = match[1];
-    const value = match[2];
-    floatMap.set(key, value); // simpan nilai float asli (string)
-  }
-
-  if (floatMap.size === 0) return jsonText;
-
-  // patch output sesuai nilai asli
-  return jsonText.replace(/"([^"]+)"\s*:\s*(-?\d+(\.\d+)?)/g, (m, key, num) => {
-    if (floatMap.has(key)) {
-      return `"${key}": ${floatMap.get(key)}`;
-    }
-    return m;
-  });
-}
-
-
 
 /* ----------------- UI wiring ----------------- */
 const modePaste = el('modePaste'), modeFile = el('modeFile');
@@ -647,6 +623,21 @@ addBlacklistBtn.addEventListener('click', ()=>{
 
 fileInput.addEventListener('change', (ev)=>{ const f = ev.target.files && ev.target.files[0]; if(!f) return; const r = new FileReader(); r.onload = ()=> { jsonInput.value = r.result; setMode('paste'); runStatus.textContent = 'Loaded file: ' + f.name; }; r.onerror = ()=> runStatus.textContent = 'Failed to load file'; r.readAsText(f); });
 
+function stringifyWithFloat(obj,arg1,arg2) {
+  return JSON.stringify(obj, (key, value) => {
+    if (typeof value === "number" && Number.isInteger(value) && String(value).indexOf('.') === -1) {
+      return value.toFixed(1);
+    }
+    return value;
+  },arg2).replace(/"(\d+\.\d+)"/g, "$1"); // hapus tanda kutip dari string angka
+}
+
+
+
+
+
+
+
 loadExample.addEventListener('click', ()=>{
   const example = {
     "namespace":"server_form",
@@ -655,19 +646,22 @@ loadExample.addEventListener('click', ()=>{
     "long_form":{},
     "hellooo@hello":{},
     "idk@server_form.button":{},
-    "test":{"type":"stack_panel","factory":{"name":"buttons","button":"server_form.dynamic_button","modal":"@server_form.idk"}}
+    "test":{"type":"stack_panel","size":1.0,"factory":{"name":"buttons","button":"server_form.dynamic_button","modal":"@server_form.idk"}}
   };
-  jsonInput.value = JSON.stringify(example, null, 4);
+  jsonInput.value = stringifyWithFloat(example,null,2)
   runStatus.textContent = 'Example loaded';
 });
 clearBtn.addEventListener('click', ()=>{ jsonInput.value = ''; outputEl.textContent = ''; lastResultObj = null; lastMap = null; runStatus.textContent = 'cleared'; });
 
-
-
 runBtn.addEventListener('click', ()=>{
   errorsEl && (errorsEl.textContent = '');
   try {
-    if(!jsonInput.value.trim()){ errorsEl.textContent = 'No JSON input provided'; runStatus.textContent = 'error'; return; }
+    if(!jsonInput.value.trim()){ 
+      errorsEl.textContent = 'No JSON input provided'; 
+      runStatus.textContent = 'error'; 
+      return; 
+    }
+
     let obj = JSON.parse(jsonInput.value);
     const nsOverride = String(namespaceOverride.value || '').trim();
     if(nsOverride) obj.namespace = nsOverride;
@@ -680,26 +674,19 @@ runBtn.addEventListener('click', ()=>{
     lastMap = out.map;
     pretty = !minifyInput.checked;
 
-    let jsonText,
-    originalInput=jsonInput.value
-if (unicodeFlag) {
-  const transformedObj = unicodeEscapeAllStringsObj(JSON.parse(lastResultObj));
-  let tmp = pretty
-    ? JSON.stringify(transformedObj, null, 2)
-    : JSON.stringify(transformedObj);
-  jsonText = fixStringifyUnicodeEscapes(
-    preserveFloats(tmp, originalInput)
-  );
-} else {
-  let tmp = pretty
-    ? JSON.stringify(JSON.parse(lastResultObj), null, 2)
-    : JSON.stringify(JSON.parse(lastResultObj));
-  jsonText = preserveFloats(tmp, originalInput);
-}
+    let tmp;
+    if (unicodeFlag) {
+      const transformed = unicodeEscapeAllStringsObj(JSON.parse(lastResultObj));
+      tmp = pretty 
+        ? stringifyWithFloat(JSON.parse(transformed), null, 2) 
+        : stringifyWithFloat(JSON.parse(transformed));
+    } else {
+      tmp = pretty
+        ? stringifyWithFloat(JSON.parse(lastResultObj), null, 2)
+        : stringifyWithFloat(JSON.parse(lastResultObj));
+    }
 
-
-
-    outputEl.textContent = jsonText
+    outputEl.textContent = tmp;
     runStatus.textContent = 'done';
     errorsEl.textContent = '';
   } catch(err) {
@@ -707,6 +694,7 @@ if (unicodeFlag) {
     runStatus.textContent = 'error';
   }
 });
+
 
 /* copy / download / toggle */
 copyBtn.addEventListener('click', ()=>{ if(!outputEl.textContent) return; navigator.clipboard.writeText(outputEl.textContent).then(()=> runStatus.textContent = 'copied'); });
@@ -740,8 +728,6 @@ window.addEventListener('keydown', (e)=>{ if(e.key === 'Escape') { modalBackdrop
 runStatus.textContent = 'idle';
 renderBlacklist();
   </script>
-
-
 </body>
 
-  </html>
+</html>
