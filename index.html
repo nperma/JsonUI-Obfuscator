@@ -686,6 +686,7 @@ runBtn.addEventListener('click', ()=>{
         : stringifyWithFloat(JSON.parse(lastResultObj));
     }
 
+    tmp=fixStringifyUnicodeEscapes(tmp);
     outputEl.textContent = tmp;
     runStatus.textContent = 'done';
     errorsEl.textContent = '';
