@@ -561,32 +561,31 @@ function tools_4no(json, blacklist = [],prefix,len) {
     if (!renameMap[elementName]) renameMap[elementName] = randomName(prefix,len);
   }
 
-  // 3. Replace dalam string JSON, hanya kalau elementName ada di defined
+// 3. Replace dalam string JSON, hanya kalau elementName ada di defined
   let text = JSON.stringify(json);
 
-  for (const [oldName, newName] of Object.entries(renameMap)) {
+  // Urutkan berdasarkan panjang, supaya tidak ketimpa prefix yang mirip
+  const sortedEntries = Object.entries(renameMap).sort((a,b) => b[0].length - a[0].length);
+
+  for (const [oldName, newName] of sortedEntries) {
     if (!defined.has(oldName)) continue;
 
-    const reKeyFramesPlain = new RegExp(`@${ns}\\.${oldName}\\b`, 'g');
-text = text.replace(reKeyFramesPlain, `@${ns}.${newName}`);
-    
     // ganti key: "idk@server_form.button" → "xyz@server_form.button"
-    const reKey = new RegExp(`"${oldName}(@${ns}\\.[^"]+)?"`, 'g');
+    const reKey = new RegExp(`"${oldName}(@${ns}\\.[^"]+)?"(?=\\s*:)`, 'g');
     text = text.replace(reKey, (m) => m.replace(oldName, newName));
 
-    // referensi: "@server_form.idk"
-    const reNs = new RegExp(`@${ns}\\.${oldName}\\b`, 'g');
-    text = text.replace(reNs, `@${ns}.${newName}`);
+    // referensi: @namespace.oldName  atau  @namespace.oldName-fN
+    const reNs = new RegExp(`@${ns}\\.${oldName}(?:-f\\d+)?\\b`, 'g');
+    text = text.replace(reNs, (m) => m.replace(oldName, newName));
 
-    // referensi: "server_form.idk"
+    // referensi: "namespace.oldName"
     const reNs2 = new RegExp(`"${ns}\\.${oldName}"`, 'g');
     text = text.replace(reNs2, `"${ns}.${newName}"`);
 
-    // referensi: "@idk"
-    const reLocal = new RegExp(`@${oldName}\\b`, 'g');
-    text = text.replace(reLocal, `@${newName}`)
+    // referensi: @oldName (atau @oldName-fN)
+    const reLocal = new RegExp(`@${oldName}(?:-f\\d+)?\\b`, 'g');
+    text = text.replace(reLocal, (m) => m.replace(oldName, newName));
   }
-
   return{result:text,map:renameMap};
 }
 
