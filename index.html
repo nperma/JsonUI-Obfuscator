@@ -567,6 +567,9 @@ function tools_4no(json, blacklist = [],prefix,len) {
   for (const [oldName, newName] of Object.entries(renameMap)) {
     if (!defined.has(oldName)) continue;
 
+    const reKeyFramesPlain = new RegExp(`@${ns}\\.${oldName}\\b`, 'g');
+text = text.replace(reKeyFramesPlain, `@${ns}.${newName}`);
+    
     // ganti key: "idk@server_form.button" → "xyz@server_form.button"
     const reKey = new RegExp(`"${oldName}(@${ns}\\.[^"]+)?"`, 'g');
     text = text.replace(reKey, (m) => m.replace(oldName, newName));
@@ -581,7 +584,7 @@ function tools_4no(json, blacklist = [],prefix,len) {
 
     // referensi: "@idk"
     const reLocal = new RegExp(`@${oldName}\\b`, 'g');
-    text = text.replace(reLocal, `@${newName}`);
+    text = text.replace(reLocal, `@${newName}`)
   }
 
   return{result:text,map:renameMap};
